@@ -257,6 +257,17 @@ input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px 
 .admin-dot:hover { opacity: .7; }
 body[data-view="chat"] .admin-dot { display: none; }
 
+.privacy-shield {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  background: var(--bg);
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 /* ---------- Chat ---------- */
 
 .chat { background: var(--bg); }
@@ -977,6 +988,149 @@ body[data-view="chat"] .admin-dot { display: none; }
 @media (min-width: 900px) {
   .bubble { max-width: min(70%, 520px); }
 }
+
+/* =====================================================================
+   v3 additions: glass surfaces, reply/react/delete, voice messages,
+   admin branding, storage usage, privacy lock
+   ===================================================================== */
+
+/* ---- iOS-style translucent ("glass") surfaces ---- */
+/* backdrop-filter degrades gracefully: browsers that don't support it just
+   see the plain --surface colour underneath, which is already correct. */
+.chat-header, .composer, .reply-bar, .sheet-header, .admin-header, .dialog, .toast, .action-sheet {
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  backdrop-filter: blur(20px) saturate(180%);
+}
+.admin-header { position: sticky; top: 0; z-index: 5; padding: 10px 0; margin: -16px -16px 16px; padding-inline: 16px; }
+
+.btn, .tool-btn, .icon-btn, .send-btn, .preset, .g-item, .reaction-pill, .voice-play {
+  transition: transform .12s ease, opacity .12s ease, background-color .15s, border-color .15s;
+}
+.btn:active, .tool-btn:active, .icon-btn:active, .send-btn:active, .reaction-pill:active, .voice-play:active {
+  transform: scale(0.94);
+}
+
+/* ---- reply bar (composer) ---- */
+.reply-bar { flex: none; display: flex; align-items: center; gap: 10px; padding: 8px 14px; border-top: 1px solid var(--border); }
+.reply-bar-line { width: 3px; align-self: stretch; background: var(--accent); border-radius: 2px; }
+.reply-bar-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.reply-bar-text b { font-size: 12px; color: var(--accent-strong); }
+.reply-bar-text span { font-size: 13px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.icon-btn.sm { width: 32px; height: 32px; }
+
+/* ---- reply quote shown inside a bubble ---- */
+.reply-quote {
+  background: rgba(127, 127, 127, 0.14);
+  border-left: 3px solid var(--accent);
+  border-radius: 10px;
+  padding: 5px 9px;
+  margin-bottom: 5px;
+  cursor: pointer;
+}
+.mine .reply-quote { border-left-color: var(--on-mine); background: rgba(255, 255, 255, 0.16); }
+.reply-quote .rq-name { font-size: 11.5px; font-weight: 700; color: var(--accent-strong); }
+.mine .reply-quote .rq-name { color: var(--on-mine); opacity: .85; }
+.reply-quote .rq-snippet { font-size: 12.5px; opacity: .8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.msg-row.flash .bubble { animation: flashHighlight 0.9s ease; }
+@keyframes flashHighlight {
+  0%, 100% { box-shadow: none; }
+  30% { box-shadow: 0 0 0 3px var(--accent); }
+}
+
+/* ---- deleted message ---- */
+.bubble.deleted { background: transparent; border: 1.5px dashed var(--border); }
+.bubble.deleted .deleted-text { font-style: italic; color: var(--muted); font-size: 14.5px; }
+
+/* ---- reactions ---- */
+.reactions { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 5px; }
+.reaction-pill {
+  appearance: none;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+.mine .reaction-pill { border-color: rgba(255, 255, 255, 0.4); background: rgba(255, 255, 255, 0.14); color: var(--on-mine); }
+.reaction-pill.mine { border-color: var(--accent); background: var(--accent-soft); color: var(--accent-strong); }
+.mine .reaction-pill.mine { background: rgba(255, 255, 255, 0.32); border-color: #fff; color: var(--on-mine); }
+
+/* ---- action sheet (long-press: react / reply / delete) ---- */
+.action-sheet {
+  width: 100%;
+  max-width: 380px;
+  margin: auto 0 0;
+  border-radius: 22px 22px 0 0;
+  padding: 14px 14px calc(14px + env(safe-area-inset-bottom, 0px));
+  box-shadow: var(--shadow);
+}
+@media (min-width: 640px) { .action-sheet { margin: auto; border-radius: 22px; } }
+.ms-reactions { display: flex; justify-content: space-between; gap: 4px; padding: 4px 2px 14px; }
+.ms-reactions button { appearance: none; border: 0; background: transparent; font-size: 26px; line-height: 1; padding: 6px; border-radius: 50%; cursor: pointer; }
+.ms-reactions button:active { background: var(--surface-2); transform: scale(1.15); }
+.ms-item {
+  appearance: none;
+  width: 100%;
+  text-align: center;
+  border: 0;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 16px;
+  font-weight: 600;
+  padding: 13px;
+  border-radius: 14px;
+  margin-top: 8px;
+  cursor: pointer;
+}
+.ms-item.danger { color: var(--danger); }
+.ms-item.cancel { color: var(--muted); font-weight: 700; }
+
+/* ---- voice messages: composer record bar ---- */
+.record-bar { display: none; flex: 1; align-items: center; gap: 10px; padding: 4px 4px 4px 10px; }
+.composer.recording .composer-box { display: none; }
+.composer.recording .record-bar { display: flex; }
+.record-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--danger); animation: recordPulse 1.1s ease-in-out infinite; flex: none; }
+@keyframes recordPulse { 0%, 100% { opacity: 1; } 50% { opacity: .3; } }
+#record-time { font-variant-numeric: tabular-nums; font-weight: 700; color: var(--text); }
+.record-hint { color: var(--muted); font-size: 13.5px; flex: 1; }
+
+/* ---- voice messages: chat bubble player ---- */
+.bubble.voice { min-width: 210px; }
+.voice-row { display: flex; align-items: center; gap: 10px; padding: 2px 0 4px; }
+.voice-play {
+  flex: none;
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  border: 0;
+  background: var(--accent);
+  color: var(--on-accent);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+.mine .voice-play { background: rgba(255, 255, 255, 0.28); color: var(--on-mine); }
+.voice-play .ic-pause { display: none; }
+.voice-play.playing .ic-play { display: none; }
+.voice-play.playing .ic-pause { display: block; }
+.voice-track { flex: 1; height: 4px; border-radius: 2px; background: rgba(127, 127, 127, 0.3); overflow: hidden; }
+.mine .voice-track { background: rgba(255, 255, 255, 0.3); }
+.voice-bar { height: 100%; width: 0%; background: currentColor; border-radius: 2px; transition: width .1s linear; }
+.voice-time { font-size: 11px; opacity: .75; white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+/* ---- admin: max-participants field, storage usage ---- */
+.max-field { display: flex; flex-direction: column; gap: 4px; width: 84px; flex: none; }
+.max-field span { font-size: 12px; color: var(--muted); }
+.max-field input { width: 100%; padding: 11px 10px; border: 1.5px solid var(--border); border-radius: 12px; background: var(--surface); color: var(--text); font: inherit; }
+.usage-bar { height: 10px; border-radius: 6px; background: var(--surface-2); overflow: hidden; margin-bottom: 8px; }
+.usage-fill { height: 100%; background: var(--accent); border-radius: 6px; transition: width .3s ease; }
+.usage-fill.warn { background: var(--danger); }
+.usage-note { font-size: 12.5px; color: var(--muted); margin-top: 6px; }
+
+/* ---- privacy auto-lock icon ---- */
+.privacy-shield svg { opacity: .6; }
   </style>
 </head>
 <body data-view="home">
@@ -987,7 +1141,7 @@ body[data-view="chat"] .admin-dot { display: none; }
     <section id="view-home" class="view home">
       <main class="home-card">
         <h1 id="app-title">Private Chat</h1>
-        <p class="home-sub">Enter Private Chat Code</p>
+        <p class="home-sub" id="home-sub">Enter Private Chat Code</p>
 
         <form id="code-form" autocomplete="off" novalidate>
           <label for="code-input" class="sr-only">Private chat code</label>
@@ -1036,14 +1190,39 @@ body[data-view="chat"] .admin-dot { display: none; }
         </button>
       </div>
 
+      <div id="reply-bar" class="reply-bar hidden">
+        <div class="reply-bar-line"></div>
+        <div class="reply-bar-text">
+          <b id="reply-bar-name"></b>
+          <span id="reply-bar-snippet"></span>
+        </div>
+        <button id="reply-bar-close" class="icon-btn sm" type="button" aria-label="Cancel reply">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
+      </div>
+
       <form id="composer" class="composer" autocomplete="off">
         <input id="photo-input" type="file" accept="image/*" multiple hidden>
+        <div id="record-bar" class="record-bar">
+          <button id="record-cancel" class="icon-btn" type="button" aria-label="Cancel recording">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+          </button>
+          <span class="record-dot"></span>
+          <span id="record-time">0:00</span>
+          <span class="record-hint">Recording voice message&hellip;</span>
+          <button id="record-send" class="send-btn" type="button" aria-label="Send voice message">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11l16-7-7 16-2-7-7-2z"/></svg>
+          </button>
+        </div>
         <div class="composer-box">
           <label for="msg-input" class="sr-only">Message</label>
-          <textarea id="msg-input" rows="1" maxlength="2000" placeholder="Type a message..." enterkeyhint="send"></textarea>
+          <textarea id="msg-input" rows="1" maxlength="1000" placeholder="Type a message..." enterkeyhint="send"></textarea>
           <div class="composer-tools">
             <button id="attach-btn" class="tool-btn" type="button" aria-label="Send a photo" title="Send a photo">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5l-8.6 8.6a5.5 5.5 0 0 1-7.8-7.8l9-9a3.7 3.7 0 0 1 5.2 5.2l-9 9a1.8 1.8 0 0 1-2.6-2.6l8.3-8.3"/></svg>
+            </button>
+            <button id="mic-btn" class="tool-btn" type="button" aria-label="Record a voice message" title="Record a voice message">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3z"/><path d="M19 11a7 7 0 0 1-14 0M12 19v3"/></svg>
             </button>
             <button id="send-btn" class="send-btn" type="submit" disabled aria-label="Send">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
@@ -1088,6 +1267,8 @@ body[data-view="chat"] .admin-dot { display: none; }
             <span>Photos / Gallery</span>
             <small id="info-media-count">Open</small>
           </button>
+          <div class="info-row"><span>Storage used</span><strong id="info-usage">-</strong></div>
+          <p class="usage-note">Photos and voice messages only - text messages take almost no space. Estimated against Supabase's free-plan limit; check your dashboard for the exact figure.</p>
         </section>
 
         <section class="panel">
@@ -1189,9 +1370,24 @@ body[data-view="chat"] .admin-dot { display: none; }
         <!-- Dashboard -->
         <section id="admin-dashboard" class="hidden">
           <div class="card">
+            <h3>Appearance &amp; text</h3>
+            <label class="field"><span>Site name</span><input id="admin-app-name" type="text" maxlength="60"></label>
+            <label class="field"><span>Home screen subtitle</span><input id="admin-app-tagline" type="text" maxlength="120"></label>
+            <p class="muted" style="margin:2px 0 10px;">Default wallpaper for new visitors (anyone can still pick their own theme per chat in Chat Info).</p>
+            <div id="admin-theme-presets" class="presets"></div>
+            <div class="custom-colors">
+              <label><span>Background</span><input id="admin-theme-bg" type="color" value="#eef3f4"></label>
+              <label><span>Bubbles</span><input id="admin-theme-bubble" type="color" value="#0e7c86"></label>
+              <label><span>Accent</span><input id="admin-theme-accent" type="color" value="#0e7c86"></label>
+            </div>
+            <button id="admin-branding-save" class="btn btn-primary" type="button">Save appearance</button>
+          </div>
+
+          <div class="card">
             <h3>New chat</h3>
             <form id="create-form" class="create-row">
               <input id="create-name" type="text" maxlength="60" placeholder="Chat name (optional)" aria-label="Chat name">
+              <label class="max-field"><span>People</span><input id="create-max" type="number" min="2" max="10" value="2" aria-label="Max participants"></label>
               <button id="create-btn" class="btn btn-primary" type="submit">+ Create Chat</button>
             </form>
             <div id="create-result" class="created hidden" role="status">
@@ -1207,7 +1403,7 @@ body[data-view="chat"] .admin-dot { display: none; }
             <div class="table-wrap">
               <table class="chat-table">
                 <thead>
-                  <tr><th>Chat</th><th>Code</th><th>Messages</th><th>Status</th><th>Actions</th></tr>
+                  <tr><th>Chat</th><th>Code</th><th>Messages</th><th>People</th><th>Status</th><th>Actions</th></tr>
                 </thead>
                 <tbody id="chat-rows"></tbody>
               </table>
@@ -1215,11 +1411,35 @@ body[data-view="chat"] .admin-dot { display: none; }
             <p id="chat-empty" class="muted hidden">No chats yet. Create one above.</p>
             <p id="chat-loading" class="muted">Loading chats...</p>
           </div>
+
+          <div class="card">
+            <h3>Storage used</h3>
+            <div class="usage-bar"><div id="admin-usage-bar" class="usage-fill" style="width:0%"></div></div>
+            <p id="admin-usage-text" class="muted">-</p>
+            <p class="usage-note">Photos and voice messages only. This is an estimate against Supabase's current free-plan limit (1 GB) - always check your Supabase dashboard for the exact, up-to-date figure.</p>
+          </div>
         </section>
       </div>
     </div>
 
     <!-- ================= DIALOG ================= -->
+    <!-- ================= MESSAGE ACTIONS (long-press) ================= -->
+    <div id="msg-actions" class="dialog-backdrop hidden" role="dialog" aria-modal="true" aria-label="Message actions">
+      <div class="action-sheet">
+        <div id="ms-reactions" class="ms-reactions">
+          <button type="button" data-emoji="&#10084;&#65039;">&#10084;&#65039;</button>
+          <button type="button" data-emoji="&#128514;">&#128514;</button>
+          <button type="button" data-emoji="&#128558;">&#128558;</button>
+          <button type="button" data-emoji="&#128546;">&#128546;</button>
+          <button type="button" data-emoji="&#128077;">&#128077;</button>
+          <button type="button" data-emoji="&#128591;">&#128591;</button>
+        </div>
+        <button id="ms-reply" class="ms-item" type="button">Reply</button>
+        <button id="ms-delete" class="ms-item danger hidden" type="button">Delete for everyone</button>
+        <button id="ms-cancel" class="ms-item cancel" type="button">Cancel</button>
+      </div>
+    </div>
+
     <div id="dialog" class="dialog-backdrop hidden">
       <div class="dialog" role="alertdialog" aria-modal="true" aria-labelledby="dialog-title">
         <h3 id="dialog-title"></h3>
@@ -1238,6 +1458,11 @@ body[data-view="chat"] .admin-dot { display: none; }
 
     <!-- Admin entry: tiny, subtle dot in the bottom-left corner (home screen only) -->
     <button id="admin-dot" class="admin-dot" type="button" aria-label="Admin">&bull;</button>
+
+    <!-- Covers the screen the instant the tab/app is backgrounded, so a chat is never left visible. -->
+    <div id="privacy-shield" class="privacy-shield hidden" aria-hidden="true">
+      <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+    </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -1263,10 +1488,107 @@ const CONFIG = {
   SEND_TIMEOUT_MS: 20000,   // give up on a slow send after this long
   LOCAL_LIMIT: 200,         // most recent messages kept in the private device copy
 
-  BUCKET: "chat-media",         // private Supabase Storage bucket for photos (created by supabase-update.sql)
-  UPLOAD_TIMEOUT_MS: 60000,     // give up on a very slow photo upload after this long
+  BUCKET: "chat-media",         // private Supabase Storage bucket for photos & voice notes
+  UPLOAD_TIMEOUT_MS: 60000,     // give up on a very slow upload after this long
   MAX_PHOTOS_PER_PICK: 10,      // photos sent at once
+  MSG_MAX_LEN: 1000,            // plain-text characters allowed per message (kept well under the 4000-char encrypted-storage limit)
+  VOICE_MAX_MS: 120000,         // longest voice message: 2 minutes
+  FREE_TIER_BYTES: 1024 * 1024 * 1024, // Supabase free-plan storage limit, used only for the on-screen estimate - check your dashboard for the exact current figure
 };
+
+/* =====================================================================
+   1b. MESSAGE ENCRYPTION
+   ---------------------------------------------------------------------
+   Both people type the same private code to get into a chat, so the code
+   doubles as a shared secret. A key is derived from it (PBKDF2 -> AES-GCM)
+   and ONLY the text of a message is encrypted with it before it is sent.
+   Supabase - including the project owner looking at the table in the
+   dashboard - only ever stores and sees the ciphertext. Photos and voice
+   notes are not covered by this (see the README for why).
+   This is symmetric, code-derived encryption, not a full asymmetric
+   protocol like Signal's: anyone who has the chat code can derive the
+   same key, which is the same trust boundary the app already has.
+   ===================================================================== */
+const E2E_PREFIX = "e2e1:";
+const e2eKeyCache = new Map(); // chat code -> CryptoKey
+
+function hasCrypto() {
+  return !!(window.isSecureContext && window.crypto && crypto.subtle);
+}
+
+async function deriveChatKey(code) {
+  if (!hasCrypto() || !code) return null;
+  if (e2eKeyCache.has(code)) return e2eKeyCache.get(code);
+  try {
+    const material = await crypto.subtle.importKey("raw", new TextEncoder().encode(code), "PBKDF2", false, ["deriveKey"]);
+    const key = await crypto.subtle.deriveKey(
+      { name: "PBKDF2", salt: new TextEncoder().encode("private-chat-e2e-v1"), iterations: 120000, hash: "SHA-256" },
+      material,
+      { name: "AES-GCM", length: 256 },
+      false,
+      ["encrypt", "decrypt"]
+    );
+    e2eKeyCache.set(code, key);
+    return key;
+  } catch (err) {
+    console.warn("Could not set up message encryption; messages will be sent as plain text.", err);
+    return null;
+  }
+}
+
+function bytesToB64(bytes) {
+  let s = "";
+  for (const b of bytes) s += String.fromCharCode(b);
+  return btoa(s);
+}
+function b64ToBytes(str) {
+  const s = atob(str);
+  const bytes = new Uint8Array(s.length);
+  for (let i = 0; i < s.length; i++) bytes[i] = s.charCodeAt(i);
+  return bytes;
+}
+
+async function encryptBody(key, text) {
+  if (!key || !text) return text || "";
+  try {
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const ct = new Uint8Array(await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, new TextEncoder().encode(text)));
+    const combined = new Uint8Array(iv.length + ct.length);
+    combined.set(iv, 0);
+    combined.set(ct, iv.length);
+    return E2E_PREFIX + bytesToB64(combined);
+  } catch (err) {
+    console.warn("Could not encrypt this message; sending it as plain text.", err);
+    return text;
+  }
+}
+
+async function decryptBody(key, stored) {
+  if (!stored || !stored.startsWith(E2E_PREFIX)) return stored || "";
+  if (!key) return "\uD83D\uDD12 Encrypted message";
+  try {
+    const combined = b64ToBytes(stored.slice(E2E_PREFIX.length));
+    const plain = await crypto.subtle.decrypt({ name: "AES-GCM", iv: combined.slice(0, 12) }, key, combined.slice(12));
+    return new TextDecoder().decode(plain);
+  } catch (err) {
+    return "\uD83D\uDD12 Unable to decrypt this message";
+  }
+}
+
+async function decryptRows(rows, key) {
+  for (const r of rows) {
+    if (r.body && r.body.startsWith(E2E_PREFIX)) r.body = await decryptBody(key, r.body);
+  }
+  return rows;
+}
+
+// navigator.vibrate has no effect (and no error) on iPhones - Safari does not
+// implement the Vibration API - so this is a harmless no-op there.
+function haptic(kind) {
+  if (!navigator.vibrate) return;
+  const patterns = { tap: 10, success: [12, 40, 12], warn: [20, 30, 20], long: 18 };
+  try { navigator.vibrate(patterns[kind] || 10); } catch (e) { /* ignore */ }
+}
 /* ===================== END OF CONFIGURATION ======================== */
 
 
@@ -1305,9 +1627,12 @@ function normalizeCode(value) {
   return String(value || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
 }
 function formatCode(code) {
-  return code && code.length === 8 ? `${code.slice(0, 4)}-${code.slice(4)}` : code || "";
+  if (!code) return "";
+  if (code.length === 12) return `${code.slice(0, 4)}-${code.slice(4, 8)}-${code.slice(8)}`;
+  if (code.length === 8) return `${code.slice(0, 4)}-${code.slice(4)}`;
+  return code;
 }
-function generateCode(length = 8) {
+function generateCode(length = 12) {
   const ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"; // 31 symbols
   const limit = 256 - (256 % ALPHABET.length);         // avoids modulo bias
   let out = "";
@@ -1781,6 +2106,9 @@ function loadTheme(chatId) {
     if (t && t.preset === "custom" && isHex(t.bg) && isHex(t.bubble) && isHex(t.accent)) return t;
     if (t && THEME_PRESETS[t.preset]) return { preset: t.preset };
   } catch (e) { /* fall through to default */ }
+  const d = state.appSettings && state.appSettings.default_theme;
+  if (d && d.preset === "custom" && isHex(d.bg) && isHex(d.bubble) && isHex(d.accent)) return d;
+  if (d && THEME_PRESETS[d.preset]) return { preset: d.preset };
   return { preset: "classic" };
 }
 
@@ -1795,9 +2123,10 @@ function saveTheme(chatId, theme) {
 let db = null; // Supabase client (created in init)
 
 const MESSAGE_COLUMNS_BASE = "id, chat_id, sender_id, sender_name, body, created_at";
-const MESSAGE_COLUMNS_PHOTOS = MESSAGE_COLUMNS_BASE + ", image_path, image_thumb_path, image_w, image_h";
-let MESSAGE_COLUMNS = MESSAGE_COLUMNS_PHOTOS;
-let photosReady = true;               // becomes false if supabase-update.sql has not been run yet
+const MESSAGE_COLUMNS_RICH = MESSAGE_COLUMNS_BASE +
+  ", image_path, image_thumb_path, image_w, image_h, reply_to, reactions, deleted, audio_path, audio_duration";
+let MESSAGE_COLUMNS = MESSAGE_COLUMNS_RICH;
+let photosReady = true;               // becomes false if supabase-update.sql / supabase-update-2.sql have not been run yet
 const SIGNED_TTL = 3600;              // seconds a photo link stays valid
 const IMG_FULL_MAX = 2048;            // longest side of the stored photo
 const IMG_THUMB_MAX = 480;            // longest side of the thumbnail
@@ -1841,6 +2170,13 @@ const state = {
 
   gallery: { open: false, items: [], ids: new Set(), hasMore: false, loading: false, loaded: false },
   lightbox: { items: [], index: 0, token: 0 },
+
+  appSettings: null,        // { app_name, app_tagline, default_theme } - admin branding, loaded once at start
+  replyTo: null,             // { id, senderName, snippet } - message the composer is currently replying to
+  actionMessageId: null,     // id of the message the long-press action sheet is open for
+  recording: null,           // { recorder, chunks, startedAt, timerId, stream } while recording a voice note
+
+  suppressAutoLock: 0,       // Date.now() timestamp until which a backgrounding is NOT treated as "left the app"
 };
 
 const els = {
@@ -1894,6 +2230,39 @@ const els = {
   gallerySentinel: $("#gallery-sentinel"),
   galleryInput: $("#gallery-input"),
 
+  homeSub: $("#home-sub"),
+  replyBar: $("#reply-bar"),
+  replyBarName: $("#reply-bar-name"),
+  replyBarSnippet: $("#reply-bar-snippet"),
+  replyBarClose: $("#reply-bar-close"),
+  micBtn: $("#mic-btn"),
+  recordBar: $("#record-bar"),
+  recordTime: $("#record-time"),
+  recordCancel: $("#record-cancel"),
+  recordSend: $("#record-send"),
+
+  msgActions: $("#msg-actions"),
+  msgActionsReactions: $("#ms-reactions"),
+  msReply: $("#ms-reply"),
+  msDelete: $("#ms-delete"),
+  msCancel: $("#ms-cancel"),
+
+  infoUsage: $("#info-usage"),
+
+  adminAppName: $("#admin-app-name"),
+  adminAppTagline: $("#admin-app-tagline"),
+  adminThemePresets: $("#admin-theme-presets"),
+  adminThemeBg: $("#admin-theme-bg"),
+  adminThemeBubble: $("#admin-theme-bubble"),
+  adminThemeAccent: $("#admin-theme-accent"),
+  adminBrandingSave: $("#admin-branding-save"),
+  adminUsageBar: $("#admin-usage-bar"),
+  adminUsageText: $("#admin-usage-text"),
+
+  createMax: $("#create-max"),
+
+  privacyShield: $("#privacy-shield"),
+
   lightbox: $("#lightbox"),
   lbClose: $("#lb-close"),
   lbName: $("#lb-name"),
@@ -1946,21 +2315,23 @@ function fallBackFromPhotoColumns(error) {
   const text = String(error.message || "") + " " + String(error.details || "");
   const missing =
     error.code === "42703" ||
-    (/image_(path|thumb_path|w|h)/i.test(text) && /does not exist|could not find|schema cache/i.test(text));
+    (/(image_(path|thumb_path|w|h)|reply_to|reactions|audio_path|audio_duration|"?deleted"?)/i.test(text) &&
+      /does not exist|could not find|schema cache/i.test(text));
   if (!missing) return false;
   photosReady = false;
   MESSAGE_COLUMNS = MESSAGE_COLUMNS_BASE;
-  console.warn("Photo columns are missing. Run supabase-update.sql to turn photos on.");
-  for (const node of [els.attachBtn, els.galleryBtn]) node.classList.add("hidden");
+  console.warn("Some columns are missing. Run supabase-update.sql and supabase-update-2.sql to turn on photos, voice notes, replies and reactions.");
+  for (const node of [els.attachBtn, els.galleryBtn, els.micBtn]) node.classList.add("hidden");
   const panel = els.infoGallery.closest(".panel");
   if (panel) panel.classList.add("hidden");
-  toast("Photos need the database update (supabase-update.sql).", "error", 6000);
+  toast("Some features need a database update (supabase-update.sql, supabase-update-2.sql).", "error", 6500);
   return true;
 }
 
 async function fetchMessages(build) {
   let res = await build(MESSAGE_COLUMNS);
   if (res.error && fallBackFromPhotoColumns(res.error)) res = await build(MESSAGE_COLUMNS);
+  if (!res.error && res.data) await decryptRows(res.data, state.chat ? state.chat.msgKey : null);
   return res;
 }
 
@@ -2213,6 +2584,10 @@ async function openChatByCode(rawCode, options = {}) {
         setHomeBusy(true);
       }
       info = await joinChat(code, name);
+      if (info && info.r_full) {
+        reportOpenError(`This chat is full (max ${info.r_max_members || 2} people).`, fromAdmin);
+        return;
+      }
       if (!info || !info.r_display_name) throw new Error("Could not join chat");
       storeSet(STORE.displayName, name);
     } else if (!savedName()) {
@@ -2346,6 +2721,8 @@ async function enterChat(info, fromAdmin) {
     name: info.r_name,
     code: info.r_code,
     displayName: info.r_display_name,
+    maxMembers: info.r_max_members || 2,
+    msgKey: null, // filled in just below, once it has been derived
   };
   state.messages = [];
   state.hasMore = false;
@@ -2361,9 +2738,12 @@ async function enterChat(info, fromAdmin) {
   state.firstPaintDone = false;
   state.infoCodeShown = false;
   state.gallery = { open: false, items: [], ids: new Set(), hasMore: false, loading: false, loaded: false };
+  clearReplyTarget();
+  closeMsgActions();
 
   state.theme = loadTheme(state.chat.id);
   applyTheme(state.theme);
+  state.chat.msgKey = await deriveChatKey(state.chat.code);
 
   els.chatName.textContent = state.chat.name;
   els.msgInput.value = "";
@@ -2593,6 +2973,11 @@ function subscribeToChat() {
     )
     .on(
       "postgres_changes",
+      { event: "UPDATE", schema: "public", table: "messages", filter: `chat_id=eq.${chatId}` },
+      (payload) => onRemoteMessage(payload.new)
+    )
+    .on(
+      "postgres_changes",
       { event: "DELETE", schema: "public", table: "chats" },
       (payload) => {
         if (state.chat && payload.old && payload.old.id === state.chat.id) handleChatDeleted();
@@ -2726,11 +3111,18 @@ function applyRow(target, r) {
   if (r.sender_name) target.sender_name = r.sender_name;
   target.body = r.body || "";
   target.created_at = r.created_at;
+  target.deleted = !!r.deleted;
+  target.reply_to = r.reply_to || null;
+  target.reactions = r.reactions || {};
   if (r.image_path) {
     target.image_path = r.image_path;
     target.image_thumb_path = r.image_thumb_path || null;
     target.image_w = r.image_w || null;
     target.image_h = r.image_h || null;
+  }
+  if (r.audio_path) {
+    target.audio_path = r.audio_path;
+    target.audio_duration = r.audio_duration || null;
   }
   target.status = "sent";
 }
@@ -2752,8 +3144,11 @@ function mergeMessages(rows, save = true) {
   if (save) scheduleSave();
 }
 
-function onRemoteMessage(row) {
+async function onRemoteMessage(row) {
   if (!state.chat || !row || row.chat_id !== state.chat.id) return;
+  const chatId = state.chat.id;
+  await decryptRows([row], state.chat.msgKey);
+  if (!state.chat || state.chat.id !== chatId) return;
   mergeMessages([row]);
   renderMessages();
   if (row.image_path) galleryAddNew(row);
@@ -2766,6 +3161,29 @@ function isNearBottom() {
 
 function clamp(value, min, max) {
   return Math.max(min, Math.min(max, value));
+}
+
+function bindLongPress(node, onLongPress) {
+  let timer = null;
+  const start = (x, y) => {
+    node._lpMoved = false;
+    node._lpX = x;
+    node._lpY = y;
+    timer = setTimeout(() => { timer = null; onLongPress(); }, 450);
+  };
+  const move = (x, y) => {
+    if (timer && (Math.abs(x - node._lpX) > 10 || Math.abs(y - node._lpY) > 10)) { clearTimeout(timer); timer = null; }
+  };
+  const cancel = () => { if (timer) { clearTimeout(timer); timer = null; } };
+  node.addEventListener("touchstart", (e) => { const t = e.touches[0]; if (t) start(t.clientX, t.clientY); }, { passive: true });
+  node.addEventListener("touchmove", (e) => { const t = e.touches[0]; if (t) move(t.clientX, t.clientY); }, { passive: true });
+  node.addEventListener("touchend", cancel, { passive: true });
+  node.addEventListener("touchcancel", cancel, { passive: true });
+  node.addEventListener("mousedown", (e) => { if (e.button === 0) start(e.clientX, e.clientY); });
+  node.addEventListener("mousemove", (e) => move(e.clientX, e.clientY));
+  node.addEventListener("mouseup", cancel);
+  node.addEventListener("mouseleave", cancel);
+  node.addEventListener("contextmenu", (e) => { e.preventDefault(); cancel(); onLongPress(); });
 }
 
 function renderMessages(opts = {}) {
@@ -2818,13 +3236,64 @@ function renderMessages(opts = {}) {
     const mine = m.sender_id === myId;
     const grouped = lastSender === m.sender_id;
     const isPhoto = !!(m.image_path || m.file);
+    const isVoice = !!(m.audio_path || m.audioBlob);
     const isNew = animate && !state.renderedIds.has(m.id);
     const row = el("div", `msg-row ${mine ? "mine" : "theirs"}${grouped ? " grouped" : ""}${isNew ? " pop" : ""}`);
-    const bubble = el("div", "bubble" + (isPhoto ? " photo" : ""));
+    row.dataset.id = m.id;
+
+    if (m.deleted) {
+      const deadBubble = el("div", "bubble deleted");
+      deadBubble.appendChild(el("div", "text deleted-text", "This message was deleted"));
+      row.appendChild(deadBubble);
+      frag.appendChild(row);
+      lastSender = m.sender_id;
+      continue;
+    }
+
+    const bubble = el("div", "bubble" + (isPhoto ? " photo" : "") + (isVoice ? " voice" : ""));
 
     // Small sender name above every message.
     const senderName = m.sender_name || (mine ? state.chat.displayName : "Unknown");
     bubble.appendChild(el("div", "who", senderName));
+
+    if (m.reply_to) {
+      const original = state.messages.find((x) => x.id === m.reply_to);
+      const quote = el("div", "reply-quote");
+      quote.appendChild(el("div", "rq-name", original ? (original.sender_name || "") : "Original message"));
+      quote.appendChild(el("div", "rq-snippet", original ? snippetFor(original) : "Not loaded"));
+      quote.onclick = (e) => {
+        e.stopPropagation();
+        const target = els.messages.querySelector(`[data-id="${m.reply_to}"]`);
+        if (target) {
+          target.scrollIntoView({ block: "center", behavior: "smooth" });
+          target.classList.add("flash");
+          setTimeout(() => target.classList.remove("flash"), 900);
+        }
+      };
+      bubble.appendChild(quote);
+    }
+
+    if (isVoice) {
+      const vrow = el("div", "voice-row" + (m.status === "sending" ? " busy" : ""));
+      const playBtn = el("button", "voice-play");
+      playBtn.type = "button";
+      playBtn.setAttribute("aria-label", "Play voice message");
+      playBtn.innerHTML =
+        '<svg class="ic-play" width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>' +
+        '<svg class="ic-pause" width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>';
+      const track = el("div", "voice-track");
+      const bar = el("div", "voice-bar");
+      track.appendChild(bar);
+      const timeEl = el("div", "voice-time", "0:00 / " + fmtDuration(m.audio_duration || 0));
+      if (m.status === "sending") {
+        playBtn.disabled = true;
+        vrow.appendChild(el("div", "spinner"));
+      } else {
+        playBtn.onclick = (e) => { e.stopPropagation(); toggleVoicePlayback(m, playBtn, bar, timeEl); };
+      }
+      vrow.append(playBtn, track, timeEl);
+      bubble.appendChild(vrow);
+    }
 
     if (isPhoto) {
       const pic = el("div", "pic" + (m.status === "sending" ? " busy" : ""));
@@ -2862,13 +3331,34 @@ function renderMessages(opts = {}) {
     if (m.status === "sending") {
       bubble.classList.add("sending");
       const slow = Date.now() - (m.sentAt || 0) > 6000;
-      metaText = isPhoto ? (slow ? "Still uploading..." : "Uploading...") : (slow ? "Still sending..." : "Sending...");
+      metaText = isPhoto
+        ? (slow ? "Still uploading..." : "Uploading...")
+        : isVoice
+        ? (slow ? "Still sending..." : "Sending voice...")
+        : (slow ? "Still sending..." : "Sending...");
     } else if (m.status === "failed") {
       bubble.classList.add("failed");
       metaText = "Not sent. Tap to retry";
       bubble.onclick = () => deliver(m);
     }
     bubble.appendChild(el("div", "meta", metaText));
+
+    if (m.status === "sent") {
+      const entries = Object.entries(m.reactions || {}).filter(([, list]) => list && list.length);
+      if (entries.length) {
+        const pills = el("div", "reactions");
+        for (const [emoji, list] of entries) {
+          const mineReacted = !!(myId && list.includes(myId));
+          const pill = el("button", "reaction-pill" + (mineReacted ? " mine" : ""));
+          pill.type = "button";
+          pill.appendChild(document.createTextNode(emoji + " " + list.length));
+          pill.onclick = (e) => { e.stopPropagation(); reactToMessage(m.id, emoji); };
+          pills.appendChild(pill);
+        }
+        bubble.appendChild(pills);
+      }
+      bindLongPress(bubble, () => openMsgActions(m.id));
+    }
 
     row.appendChild(bubble);
     frag.appendChild(row);
@@ -2904,7 +3394,7 @@ function updateSendButton() {
 
 async function sendCurrentMessage() {
   if (!state.chat || !state.user) return;
-  const body = els.msgInput.value.trim();
+  const body = els.msgInput.value.trim().slice(0, CONFIG.MSG_MAX_LEN);
   if (!body) {
     els.msgInput.focus();
     return;
@@ -2916,6 +3406,9 @@ async function sendCurrentMessage() {
     sender_id: state.user.id,
     sender_name: state.chat.displayName,
     body,
+    reply_to: state.replyTo ? state.replyTo.id : null,
+    reactions: {},
+    deleted: false,
     created_at: new Date().toISOString(),
     status: "sending",
     sentAt: Date.now(),
@@ -2925,6 +3418,8 @@ async function sendCurrentMessage() {
   autoGrow();
   updateSendButton();
   els.msgInput.focus(); // keeps the phone keyboard open
+  clearReplyTarget();
+  haptic("tap");
 
   state.messages.push(msg);
   state.messages.sort(compareMessages);
@@ -2934,15 +3429,17 @@ async function sendCurrentMessage() {
 
 async function deliver(msg) {
   if (msg.file) return deliverPhoto(msg);
+  if (msg.audioBlob) return deliverVoice(msg);
   msg.status = "sending";
   msg.sentAt = Date.now();
   renderMessages({ forceBottom: true });
   setTimeout(() => { if (msg.status === "sending" && state.chat) renderMessages(); }, 6100);
 
   try {
+    const encBody = await encryptBody(state.chat.msgKey, msg.body);
     const request = db
       .from("messages")
-      .insert({ id: msg.id, chat_id: msg.chat_id, body: msg.body })
+      .insert({ id: msg.id, chat_id: msg.chat_id, body: encBody, reply_to: msg.reply_to || null })
       .select("id, created_at, sender_name")
       .single();
     const { data, error } = await withTimeout(request, CONFIG.SEND_TIMEOUT_MS);
@@ -3120,12 +3617,16 @@ async function sendPhoto(file) {
     sender_id: state.user.id,
     sender_name: state.chat.displayName,
     body: "",
+    reply_to: state.replyTo ? state.replyTo.id : null,
+    reactions: {},
+    deleted: false,
     created_at: new Date().toISOString(),
     status: "sending",
     sentAt: Date.now(),
     file,
     previewUrl: URL.createObjectURL(file),
   };
+  clearReplyTarget();
   state.messages.push(msg);
   state.messages.sort(compareMessages);
   state.stickBottom = true;
@@ -3156,12 +3657,14 @@ async function deliverPhoto(msg) {
     await uploadToBucket(fullPath, p.full.blob, p.contentType);
     await uploadToBucket(thumbPath, p.thumb.blob, "image/jpeg");
 
+    const encBody = await encryptBody(state.chat.msgKey, msg.body || "");
     const request = db
       .from("messages")
       .insert({
         id: msg.id,
         chat_id: msg.chat_id,
-        body: msg.body || "",
+        body: encBody,
+        reply_to: msg.reply_to || null,
         image_path: fullPath,
         image_thumb_path: thumbPath,
         image_w: p.full.width,
@@ -3193,6 +3696,230 @@ async function deliverPhoto(msg) {
   }
 
   if (state.chat && state.chat.id === msg.chat_id) renderMessages();
+}
+
+
+/* ---------- voice messages ---------- */
+
+function fmtDuration(totalSeconds) {
+  const s = Math.max(0, Math.round(totalSeconds || 0));
+  const m = Math.floor(s / 60);
+  const r = s % 60;
+  return `${m}:${String(r).padStart(2, "0")}`;
+}
+
+function pickAudioMime() {
+  const options = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4", "audio/ogg;codecs=opus"];
+  for (const type of options) {
+    if (window.MediaRecorder && MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(type)) return type;
+  }
+  return "";
+}
+
+async function startRecording() {
+  if (!state.chat || state.recording) return;
+  if (!navigator.mediaDevices || !window.MediaRecorder) {
+    toast("Voice messages aren't supported in this browser.", "error");
+    return;
+  }
+  try {
+    noteSystemUI(); // the microphone-permission prompt briefly backgrounds the page on some browsers
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const mimeType = pickAudioMime();
+    const recorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
+    const chunks = [];
+    recorder.addEventListener("dataavailable", (e) => { if (e.data && e.data.size) chunks.push(e.data); });
+    state.recording = { recorder, chunks, stream, startedAt: Date.now(), timerId: null, mimeType: recorder.mimeType || mimeType || "audio/webm" };
+    recorder.start();
+    haptic("tap");
+    els.composer.classList.add("recording");
+    els.recordTime.textContent = "0:00";
+    state.recording.timerId = setInterval(() => {
+      if (!state.recording) return;
+      const secs = (Date.now() - state.recording.startedAt) / 1000;
+      els.recordTime.textContent = fmtDuration(secs);
+      if (secs * 1000 >= CONFIG.VOICE_MAX_MS) finishRecording(false);
+    }, 250);
+  } catch (err) {
+    console.error("Could not start recording:", err);
+    toast("Couldn't access the microphone. Check your browser's permission for this site.", "error", 4500);
+  }
+}
+
+function stopRecording(cancel) {
+  const rec = state.recording;
+  if (!rec) return Promise.resolve(null);
+  state.recording = null;
+  clearInterval(rec.timerId);
+  els.composer.classList.remove("recording");
+  haptic("tap");
+  return new Promise((resolve) => {
+    rec.recorder.addEventListener("stop", () => {
+      rec.stream.getTracks().forEach((t) => t.stop());
+      const durationMs = Date.now() - rec.startedAt;
+      if (cancel || durationMs < 400 || !rec.chunks.length) { resolve(null); return; }
+      resolve({ blob: new Blob(rec.chunks, { type: rec.mimeType }), durationMs, mimeType: rec.mimeType });
+    }, { once: true });
+    try { rec.recorder.stop(); } catch (e) { resolve(null); }
+  });
+}
+
+async function finishRecording(cancel) {
+  const result = await stopRecording(cancel);
+  if (!result) return;
+  await sendVoice(result.blob, result.durationMs, result.mimeType);
+}
+
+async function sendVoice(blob, durationMs, mimeType) {
+  if (!state.chat || !state.user) return;
+  if (blob.size > IMG_MAX_INPUT) {
+    toast("That voice message is too large to send.", "error");
+    return;
+  }
+  const msg = {
+    id: uuid(),
+    chat_id: state.chat.id,
+    sender_id: state.user.id,
+    sender_name: state.chat.displayName,
+    body: "",
+    reply_to: state.replyTo ? state.replyTo.id : null,
+    reactions: {},
+    deleted: false,
+    created_at: new Date().toISOString(),
+    status: "sending",
+    sentAt: Date.now(),
+    audioBlob: blob,
+    audioMime: mimeType,
+    audio_duration: Math.round(durationMs / 100) / 10,
+    previewUrl: URL.createObjectURL(blob),
+  };
+  clearReplyTarget();
+  state.messages.push(msg);
+  state.messages.sort(compareMessages);
+  state.stickBottom = true;
+  await deliverVoice(msg);
+}
+
+async function deliverVoice(msg) {
+  msg.status = "sending";
+  msg.sentAt = Date.now();
+  renderMessages({ forceBottom: true });
+  setTimeout(() => { if (msg.status === "sending" && state.chat) renderMessages(); }, 6100);
+
+  try {
+    const ext = /mp4/.test(msg.audioMime) ? "m4a" : /ogg/.test(msg.audioMime) ? "ogg" : "webm";
+    const path = `${msg.chat_id}/${msg.id}.${ext}`;
+    await uploadToBucket(path, msg.audioBlob, (msg.audioMime || "audio/webm").split(";")[0]);
+
+    const encBody = await encryptBody(state.chat.msgKey, "");
+    const request = db
+      .from("messages")
+      .insert({
+        id: msg.id,
+        chat_id: msg.chat_id,
+        body: encBody,
+        reply_to: msg.reply_to || null,
+        audio_path: path,
+        audio_duration: msg.audio_duration,
+      })
+      .select(MESSAGE_COLUMNS)
+      .single();
+    const { data, error } = await withTimeout(request, CONFIG.SEND_TIMEOUT_MS);
+    if (error && error.code !== "23505") throw error;
+
+    msg.audio_path = path;
+    if (data) {
+      msg.created_at = data.created_at;
+      msg.sender_name = data.sender_name || msg.sender_name;
+    }
+    msg.status = "sent";
+    msg.audioBlob = null;
+    state.messages.sort(compareMessages);
+    scheduleSave();
+    if (error) syncLatest();
+  } catch (err) {
+    console.error("Voice message failed:", err);
+    msg.status = "failed";
+    toast("Voice message not sent. " + friendlyError(err), "error", 4200);
+    if (err && (err.code === "23503" || err.code === "42501") && !/storage/i.test(String(err.message || ""))) verifyChatStillExists();
+  }
+
+  if (state.chat && state.chat.id === msg.chat_id) renderMessages();
+}
+
+// One shared <audio> element per voice bubble, created the first time it is played.
+const audioEls = new Map();
+function getAudioEl(id) {
+  let a = audioEls.get(id);
+  if (!a) {
+    a = new Audio();
+    a.preload = "none";
+    audioEls.set(id, a);
+  }
+  return a;
+}
+
+async function toggleVoicePlayback(m, btn, bar, timeEl) {
+  const audio = getAudioEl(m.id);
+  if (!audio.paused) { audio.pause(); return; }
+  for (const [id, other] of audioEls) if (id !== m.id && !other.paused) other.pause();
+  try {
+    if (!audio.src) audio.src = m.previewUrl || (await getSignedUrl(m.audio_path));
+    audio.ontimeupdate = () => {
+      const pct = audio.duration ? clamp((audio.currentTime / audio.duration) * 100, 0, 100) : 0;
+      bar.style.width = pct + "%";
+      timeEl.textContent = fmtDuration(audio.currentTime) + " / " + fmtDuration(audio.duration || m.audio_duration || 0);
+    };
+    audio.onplay = () => btn.classList.add("playing");
+    audio.onpause = () => btn.classList.remove("playing");
+    audio.onended = () => { btn.classList.remove("playing"); bar.style.width = "0%"; timeEl.textContent = fmtDuration(0) + " / " + fmtDuration(m.audio_duration || 0); };
+    await audio.play();
+  } catch (err) {
+    console.error("Couldn't play voice message:", err);
+    toast("Couldn't play this voice message.", "error");
+  }
+}
+
+
+/* ---------- privacy auto-lock: leave the chat the instant Chrome is backgrounded ---------- */
+// If someone glances at your phone while Chrome (or this tab) is in the
+// background, the chat must not still be sitting open when you come back -
+// the code has to be typed in again. "visibilitychange" is the signal for
+// that. Opening the OS photo picker, the microphone-permission prompt, or a
+// download briefly backgrounds the page too, so noteSystemUI() marks a short
+// grace window beforehand and those are not treated as "left the app".
+
+function noteSystemUI(ms = 15000) {
+  state.suppressAutoLock = Date.now() + ms;
+}
+
+function armPrivacyShield() {
+  if (els.privacyShield) els.privacyShield.classList.remove("hidden");
+}
+function disarmPrivacyShield() {
+  if (els.privacyShield) els.privacyShield.classList.add("hidden");
+}
+
+async function lockToCodeScreen() {
+  if (state.recording) finishRecording(true);
+  closeSheets();
+  closeAdmin();
+  await goBack();
+  disarmPrivacyShield();
+  toast("Locked for privacy. Enter the code to continue.");
+}
+
+function bindPrivacyLock() {
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "hidden") {
+      if (state.chat) armPrivacyShield(); // hide the chat right away, before Chrome can take an app-switcher snapshot
+    } else if (document.visibilityState === "visible") {
+      const suppressed = state.suppressAutoLock && Date.now() < state.suppressAutoLock;
+      if (state.chat && !suppressed) lockToCodeScreen();
+      else disarmPrivacyShield();
+    }
+  });
+  window.addEventListener("pagehide", () => { if (state.chat) armPrivacyShield(); });
 }
 
 /* ---------- chat deleted ---------- */
@@ -3237,6 +3964,7 @@ function openInfo() {
   renderInfo();
   refreshParticipants(true);
   refreshMediaCount();
+  refreshUsage();
 }
 
 function closeInfo() {
@@ -3256,7 +3984,7 @@ function renderInfo() {
   els.infoCodeCopy.classList.toggle("hidden", !state.infoCodeShown);
 
   const people = presenceList();
-  els.infoCount.textContent = String(people.length);
+  els.infoCount.textContent = `${people.length} / ${state.chat.maxMembers || 2}`;
   const onlineNames = people.filter((p) => p.online).map((p) => p.name);
   els.infoOnline.textContent = onlineNames.length ? onlineNames.join(", ") : "Nobody";
 
@@ -3304,6 +4032,29 @@ function renderInfo() {
       addLine("Left the chat (pressed Back)", fmtDateTime(p.left_at));
     }
     els.infoActivity.appendChild(item);
+  }
+}
+
+
+function fmtBytes(n) {
+  if (!n || n < 0) return "0 MB";
+  const mb = n / (1024 * 1024);
+  if (mb < 1) return (n / 1024).toFixed(0) + " KB";
+  if (mb < 1024) return mb.toFixed(1) + " MB";
+  return (mb / 1024).toFixed(2) + " GB";
+}
+
+async function refreshUsage() {
+  if (!state.chat || !photosReady) { els.infoUsage.textContent = "-"; return; }
+  const chatId = state.chat.id;
+  try {
+    const { data, error } = await db.rpc("get_chat_media_usage", { p_chat: chatId });
+    if (error) throw error;
+    if (!state.chat || state.chat.id !== chatId) return;
+    els.infoUsage.textContent = fmtBytes(Number(data) || 0);
+  } catch (err) {
+    console.warn("Could not read storage usage:", err);
+    els.infoUsage.textContent = "-";
   }
 }
 
@@ -3588,10 +4339,105 @@ async function downloadCurrentPhoto() {
   }
 }
 
+
+/* ---------- reply, react, delete (long-press action sheet) ---------- */
+
+const REACTION_EMOJIS = ["\u2764\ufe0f", "\ud83d\ude02", "\ud83d\ude2e", "\ud83d\ude22", "\ud83d\udc4d", "\ud83d\ude4f"];
+
+function snippetFor(m) {
+  if (!m) return "";
+  if (m.deleted) return "This message was deleted";
+  if (m.image_path || m.file) return "\ud83d\udcf7 Photo";
+  if (m.audio_path || m.audioBlob) return "\ud83c\udfa4 Voice message";
+  return (m.body || "").slice(0, 80);
+}
+
+function setReplyTarget(m) {
+  if (!m || m.deleted) return;
+  state.replyTo = { id: m.id, senderName: m.sender_name || "", snippet: snippetFor(m) };
+  renderReplyBar();
+  els.msgInput.focus();
+}
+
+function clearReplyTarget() {
+  state.replyTo = null;
+  renderReplyBar();
+}
+
+function renderReplyBar() {
+  if (!els.replyBar) return;
+  const r = state.replyTo;
+  els.replyBar.classList.toggle("hidden", !r);
+  if (r) {
+    els.replyBarName.textContent = r.senderName;
+    els.replyBarSnippet.textContent = r.snippet;
+  }
+}
+
+function openMsgActions(id) {
+  const m = state.messages.find((x) => x.id === id);
+  if (!m || m.status !== "sent" || m.deleted) return;
+  state.actionMessageId = id;
+  const mine = state.user && m.sender_id === state.user.id;
+  els.msDelete.classList.toggle("hidden", !mine);
+  els.msgActions.classList.remove("hidden");
+  haptic("long");
+}
+
+function closeMsgActions() {
+  state.actionMessageId = null;
+  if (els.msgActions) els.msgActions.classList.add("hidden");
+}
+
+async function reactToMessage(id, emoji) {
+  if (!state.chat || !photosReady) return; // reactions ship with the same database update as photos
+  haptic("tap");
+  const m = state.messages.find((x) => x.id === id);
+  if (m) {
+    const uid = state.user.id;
+    const list = (m.reactions && m.reactions[emoji]) || [];
+    const nextList = list.includes(uid) ? list.filter((x) => x !== uid) : [...list, uid];
+    m.reactions = Object.assign({}, m.reactions);
+    if (nextList.length) m.reactions[emoji] = nextList;
+    else delete m.reactions[emoji];
+    renderMessages();
+  }
+  try {
+    const { error } = await db.rpc("toggle_message_reaction", { p_message: id, p_emoji: emoji });
+    if (error) throw error;
+  } catch (err) {
+    console.error("Reaction failed:", err);
+    toast("Couldn't update that reaction.", "error");
+    syncLatest();
+  }
+}
+
+async function deleteMessage(id) {
+  const ok = await showDialog({
+    title: "Delete message?",
+    text: "This deletes it for everyone in the chat. This can't be undone.",
+    confirmText: "Delete for everyone",
+    danger: true,
+  });
+  if (!ok) return;
+  haptic("warn");
+  const m = state.messages.find((x) => x.id === id);
+  if (m) { m.deleted = true; m.body = ""; m.reactions = {}; renderMessages(); }
+  try {
+    const { error } = await db.rpc("delete_own_message", { p_message: id });
+    if (error) throw error;
+  } catch (err) {
+    console.error("Delete failed:", err);
+    toast("Couldn't delete that message. " + friendlyError(err), "error");
+    syncLatest();
+  }
+}
+
 function closeSheets() {
   closeLightbox();
   closeGallery();
   closeInfo();
+  closeMsgActions();
 }
 
 
@@ -3633,6 +4479,94 @@ function showAdminDashboard() {
   els.adminLogout.classList.remove("hidden");
   els.createResult.classList.add("hidden");
   loadAdminChats();
+  adminLoadBranding();
+  refreshAdminUsage();
+}
+
+
+function buildAdminThemeUI() {
+  els.adminThemePresets.replaceChildren();
+  for (const [key, p] of Object.entries(THEME_PRESETS)) {
+    const b = el("button", "preset");
+    b.type = "button";
+    b.dataset.preset = key;
+    const sw = el("span", "swatch");
+    sw.style.background = `linear-gradient(135deg, ${p.bg} 50%, ${p.bubble} 50%)`;
+    b.append(sw, el("span", "", p.label));
+    b.onclick = () => {
+      state.adminDefaultTheme = { preset: key };
+      syncAdminThemeUI();
+    };
+    els.adminThemePresets.appendChild(b);
+  }
+  const onCustom = () => {
+    state.adminDefaultTheme = { preset: "custom", bg: els.adminThemeBg.value, bubble: els.adminThemeBubble.value, accent: els.adminThemeAccent.value };
+    syncAdminThemeUI();
+  };
+  for (const input of [els.adminThemeBg, els.adminThemeBubble, els.adminThemeAccent]) input.addEventListener("input", onCustom);
+}
+
+function syncAdminThemeUI() {
+  const t = state.adminDefaultTheme || { preset: "classic" };
+  for (const btn of els.adminThemePresets.querySelectorAll(".preset")) btn.setAttribute("aria-pressed", String(btn.dataset.preset === t.preset));
+  const resolved = t.preset === "custom" ? t : THEME_PRESETS[t.preset] || THEME_PRESETS.classic;
+  els.adminThemeBg.value = resolved.bg;
+  els.adminThemeBubble.value = resolved.bubble;
+  els.adminThemeAccent.value = resolved.accent;
+}
+
+async function adminLoadBranding() {
+  try {
+    const { data, error } = await db.from("app_settings").select("app_name, app_tagline, default_theme").eq("id", true).maybeSingle();
+    if (error) throw error;
+    if (data) {
+      els.adminAppName.value = data.app_name || CONFIG.APP_NAME;
+      els.adminAppTagline.value = data.app_tagline || "";
+      state.adminDefaultTheme = (data.default_theme && (THEME_PRESETS[data.default_theme.preset] || data.default_theme.preset === "custom"))
+        ? data.default_theme : { preset: "classic" };
+    }
+  } catch (err) {
+    console.warn("Could not load site branding (run supabase-update-2.sql to enable it):", err);
+    els.adminAppName.value = CONFIG.APP_NAME;
+  }
+  syncAdminThemeUI();
+}
+
+async function adminSaveBranding() {
+  const name = els.adminAppName.value.trim() || CONFIG.APP_NAME;
+  const tagline = els.adminAppTagline.value.trim();
+  const theme = state.adminDefaultTheme || { preset: "classic" };
+  els.adminBrandingSave.disabled = true;
+  try {
+    const { error } = await db
+      .from("app_settings")
+      .update({ app_name: name, app_tagline: tagline, default_theme: theme })
+      .eq("id", true);
+    if (error) throw error;
+    state.appSettings = { app_name: name, app_tagline: tagline, default_theme: theme };
+    applyBranding();
+    toast("Appearance saved. New visitors will see it right away.");
+  } catch (err) {
+    console.error("Save appearance failed:", err);
+    toast("Couldn't save that. " + friendlyError(err), "error");
+  } finally {
+    els.adminBrandingSave.disabled = false;
+  }
+}
+
+async function refreshAdminUsage() {
+  try {
+    const { data, error } = await db.rpc("get_total_media_usage");
+    if (error) throw error;
+    const bytes = Number(data) || 0;
+    const pct = clamp((bytes / CONFIG.FREE_TIER_BYTES) * 100, 0, 100);
+    els.adminUsageBar.style.width = pct + "%";
+    els.adminUsageBar.classList.toggle("warn", pct > 80);
+    els.adminUsageText.textContent = `${fmtBytes(bytes)} used of an estimated ${fmtBytes(CONFIG.FREE_TIER_BYTES)} free-plan limit (${pct.toFixed(1)}%)`;
+  } catch (err) {
+    console.warn("Could not read total storage usage:", err);
+    els.adminUsageText.textContent = "Not available yet - run supabase-update-2.sql.";
+  }
 }
 
 async function adminLogin(email, password) {
@@ -3664,7 +4598,7 @@ async function loadAdminChats() {
   try {
     const { data, error } = await db
       .from("chats")
-      .select("id, name, code, created_at, messages(count)")
+      .select("id, name, code, created_at, max_members, messages(count), chat_members(count)")
       .order("created_at", { ascending: false });
     if (error) throw error;
 
@@ -3685,6 +4619,7 @@ async function loadAdminChats() {
 
 function buildChatRow(chat) {
   const count = chat.messages && chat.messages[0] ? chat.messages[0].count : 0;
+  const people = chat.chat_members && chat.chat_members[0] ? chat.chat_members[0].count : 0;
   const tr = document.createElement("tr");
 
   const nameTd = el("td", "name-cell", chat.name);
@@ -3695,6 +4630,9 @@ function buildChatRow(chat) {
 
   const countTd = el("td", "", String(count));
   countTd.dataset.label = "Messages";
+
+  const peopleTd = el("td", "", `${people} / ${chat.max_members || 2}`);
+  peopleTd.dataset.label = "People";
 
   const statusTd = document.createElement("td");
   statusTd.dataset.label = "Status";
@@ -3723,17 +4661,18 @@ function buildChatRow(chat) {
   deleteBtn.onclick = () => deleteChat(chat);
 
   actionsTd.append(openBtn, copyBtn, renameBtn, deleteBtn);
-  tr.append(nameTd, codeTd, countTd, statusTd, actionsTd);
+  tr.append(nameTd, codeTd, countTd, peopleTd, statusTd, actionsTd);
   return tr;
 }
 
-async function createChat(name) {
+async function createChat(name, maxMembers) {
   const cleanName = name.trim() || "Untitled chat";
+  const max = clamp(Math.round(Number(maxMembers) || 2), 2, 10);
   for (let attempt = 0; attempt < 5; attempt++) {
-    const code = generateCode(8);
+    const code = generateCode(12);
     const { data, error } = await db
       .from("chats")
-      .insert({ code, name: cleanName })
+      .insert({ code, name: cleanName, max_members: max })
       .select("id, code, name")
       .single();
     if (!error) return data;
@@ -3831,12 +4770,47 @@ function bindEvents() {
   });
   els.sendBtn.addEventListener("mousedown", (e) => e.preventDefault()); // keep keyboard open
   els.attachBtn.addEventListener("mousedown", (e) => e.preventDefault());
-  els.attachBtn.addEventListener("click", () => els.photoInput.click());
+  els.attachBtn.addEventListener("click", () => { noteSystemUI(); els.photoInput.click(); });
   els.photoInput.addEventListener("change", () => {
     const files = Array.from(els.photoInput.files || []);
     els.photoInput.value = "";
     if (files.length) sendPhotos(files);
   });
+
+  // Voice messages: press and hold the mic button to record.
+  els.micBtn.addEventListener("mousedown", (e) => { e.preventDefault(); startRecording(); });
+  els.micBtn.addEventListener("touchstart", (e) => { e.preventDefault(); startRecording(); }, { passive: false });
+  // The record bar replaces the mic button the instant recording starts (and
+  // hides it), so the matching release has to be listened for on the
+  // document - a mouseup/touchend targeted at the now-hidden button would
+  // never arrive. Only acts while a recording is actually in progress.
+  document.addEventListener("mouseup", () => { if (state.recording) finishRecording(false); });
+  document.addEventListener("touchend", () => { if (state.recording) finishRecording(false); });
+  els.recordCancel.addEventListener("click", () => finishRecording(true));
+  els.recordSend.addEventListener("click", () => finishRecording(false));
+
+  // Reply
+  els.replyBarClose.addEventListener("click", clearReplyTarget);
+
+  // Long-press message actions: react, reply, delete
+  els.msgActionsReactions.addEventListener("click", (e) => {
+    const btn = e.target.closest("button[data-emoji]");
+    if (!btn || !state.actionMessageId) return;
+    reactToMessage(state.actionMessageId, btn.dataset.emoji);
+    closeMsgActions();
+  });
+  els.msReply.addEventListener("click", () => {
+    const m = state.messages.find((x) => x.id === state.actionMessageId);
+    closeMsgActions();
+    if (m) setReplyTarget(m);
+  });
+  els.msDelete.addEventListener("click", () => {
+    const id = state.actionMessageId;
+    closeMsgActions();
+    if (id) deleteMessage(id);
+  });
+  els.msCancel.addEventListener("click", closeMsgActions);
+  els.msgActions.addEventListener("click", (e) => { if (e.target === els.msgActions) closeMsgActions(); });
   els.msgInput.addEventListener("input", () => {
     autoGrow();
     updateSendButton();
@@ -3886,7 +4860,7 @@ function bindEvents() {
 
   // Gallery
   els.galleryClose.addEventListener("click", closeGallery);
-  els.galleryUpload.addEventListener("click", () => els.galleryInput.click());
+  els.galleryUpload.addEventListener("click", () => { noteSystemUI(); els.galleryInput.click(); });
   els.galleryInput.addEventListener("change", () => {
     const files = Array.from(els.galleryInput.files || []);
     els.galleryInput.value = "";
@@ -3908,7 +4882,7 @@ function bindEvents() {
   els.lbClose.addEventListener("click", closeLightbox);
   els.lbPrev.addEventListener("click", () => stepLightbox(-1));
   els.lbNext.addEventListener("click", () => stepLightbox(1));
-  els.lbDownload.addEventListener("click", downloadCurrentPhoto);
+  els.lbDownload.addEventListener("click", () => { noteSystemUI(); downloadCurrentPhoto(); });
   els.lbImg.addEventListener("error", () => {
     if (els.lbImg.getAttribute("src")) els.lbSpinner.classList.add("hidden");
   });
@@ -3970,11 +4944,12 @@ function bindEvents() {
     e.preventDefault();
     els.createBtn.disabled = true;
     try {
-      const chat = await createChat(els.createName.value);
+      const chat = await createChat(els.createName.value, els.createMax.value);
       els.createdName.textContent = chat.name;
       els.createdCode.textContent = formatCode(chat.code);
       els.createResult.classList.remove("hidden");
       els.createName.value = "";
+      els.createMax.value = "2";
       loadAdminChats();
     } catch (err) {
       console.error("Create chat failed:", err);
@@ -3983,6 +4958,7 @@ function bindEvents() {
       els.createBtn.disabled = false;
     }
   });
+  els.adminBrandingSave.addEventListener("click", adminSaveBranding);
   els.createdCopy.addEventListener("click", async () => {
     const ok = await copyText(els.createdCode.textContent);
     toast(ok ? "Code copied." : "Couldn't copy. Please copy it manually.", ok ? "info" : "error");
@@ -4059,7 +5035,9 @@ async function init() {
 
   fitViewport();
   buildThemeUI();
+  buildAdminThemeUI();
   bindEvents();
+  bindPrivacyLock();
   showView("home");
 
   if (!window.supabase || !window.supabase.createClient) {
@@ -4088,8 +5066,31 @@ async function init() {
   } catch (err) {
     console.error("Could not start a session:", err);
     setHomeError(friendlyError(err));
+    return;
   }
+
+  await loadAppSettings();
   // No auto-open: the person always types the private code.
+}
+
+// Site name, tagline and the wallpaper new visitors get, all set by the admin.
+async function loadAppSettings() {
+  try {
+    const { data, error } = await db.from("app_settings").select("app_name, app_tagline, default_theme").eq("id", true).maybeSingle();
+    if (error) throw error;
+    if (data) state.appSettings = data;
+  } catch (err) {
+    console.warn("Site branding isn't set up yet (run supabase-update-2.sql to enable it).", err);
+  }
+  applyBranding();
+}
+
+function applyBranding() {
+  const name = (state.appSettings && state.appSettings.app_name) || CONFIG.APP_NAME;
+  const tagline = (state.appSettings && state.appSettings.app_tagline) || "Enter Private Chat Code";
+  document.title = name;
+  els.appTitle.textContent = name;
+  if (els.homeSub) els.homeSub.textContent = tagline;
 }
 
 init();
