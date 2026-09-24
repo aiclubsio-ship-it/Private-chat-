@@ -461,6 +461,7 @@ body[data-view="chat"] .admin-dot { display: none; }
   background: var(--bg);
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+  animation: overlayIn .22s cubic-bezier(.2, .8, .2, 1);
 }
 
 .admin-shell {
@@ -579,12 +580,15 @@ body[data-view="chat"] .admin-dot { display: none; }
   position: absolute;
   inset: 0;
   z-index: 100;
-  background: rgba(8, 18, 22, 0.55);
+  background: rgba(8, 18, 22, 0.5);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 20px;
   overflow-y: auto;
+  animation: fadeIn .18s ease;
 }
 .dialog {
   width: 100%;
@@ -594,6 +598,7 @@ body[data-view="chat"] .admin-dot { display: none; }
   border-radius: 22px;
   padding: 22px;
   box-shadow: var(--shadow);
+  animation: dialogPop .38s cubic-bezier(.34, 1.56, .64, 1);
 }
 .dialog h3 { margin: 0 0 8px; font-size: 19px; letter-spacing: -0.01em; }
 .dialog-text { margin: 0 0 14px; color: var(--muted); font-size: 15px; }
@@ -609,7 +614,9 @@ body[data-view="chat"] .admin-dot { display: none; }
   transform: translateX(-50%);
   z-index: 200;
   max-width: min(90%, 420px);
-  background: var(--text);
+  background: color-mix(in srgb, var(--text) 82%, transparent);
+  -webkit-backdrop-filter: blur(18px) saturate(180%);
+  backdrop-filter: blur(18px) saturate(180%);
   color: var(--bg);
   padding: 11px 16px;
   border-radius: 14px;
@@ -617,6 +624,7 @@ body[data-view="chat"] .admin-dot { display: none; }
   font-weight: 500;
   text-align: center;
   box-shadow: var(--shadow);
+  animation: toastIn .32s cubic-bezier(.34, 1.56, .64, 1);
 }
 .toast.error { background: var(--danger); color: #fff; }
 
@@ -634,7 +642,11 @@ body[data-view="chat"] .admin-dot { display: none; }
 @keyframes spin { to { transform: rotate(360deg); } }
 @keyframes sheetIn { from { opacity: 0; transform: translateY(28px); } to { opacity: 1; transform: none; } }
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-@keyframes pop { from { opacity: 0; transform: translateY(8px) scale(.98); } to { opacity: 1; transform: none; } }
+@keyframes pop { from { opacity: 0; transform: translateY(10px) scale(.9); } to { opacity: 1; transform: none; } }
+@keyframes dialogPop { from { opacity: 0; transform: scale(.86) translateY(6px); } to { opacity: 1; transform: none; } }
+@keyframes sheetUp { from { opacity: 0; transform: translateY(100%); } to { opacity: 1; transform: none; } }
+@keyframes overlayIn { from { opacity: 0; transform: scale(1.02); } to { opacity: 1; transform: none; } }
+@keyframes toastIn { from { opacity: 0; transform: translateX(-50%) translateY(14px) scale(.92); } to { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); } }
 
 .spinner {
   width: 26px; height: 26px;
@@ -703,7 +715,7 @@ body[data-view="chat"] .admin-dot { display: none; }
 .mine .bubble .who { color: var(--on-mine); opacity: .78; }
 .mine .bubble.failed .who { color: var(--muted); opacity: 1; }
 
-.msg-row.pop .bubble { animation: pop .2s ease-out; }
+.msg-row.pop .bubble { animation: pop .32s cubic-bezier(.34, 1.56, .64, 1); }
 
 .bubble.photo { padding: 4px; }
 .bubble.photo .who { padding: 3px 8px 4px; }
@@ -998,17 +1010,29 @@ body[data-view="chat"] .admin-dot { display: none; }
 /* backdrop-filter degrades gracefully: browsers that don't support it just
    see the plain --surface colour underneath, which is already correct. */
 .chat-header, .composer, .reply-bar, .sheet-header, .admin-header, .dialog, .toast, .action-sheet {
-  background: color-mix(in srgb, var(--surface) 88%, transparent);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  backdrop-filter: blur(20px) saturate(180%);
+  background: color-mix(in srgb, var(--surface) 74%, transparent);
+  -webkit-backdrop-filter: blur(28px) saturate(200%);
+  backdrop-filter: blur(28px) saturate(200%);
+  border-color: color-mix(in srgb, var(--border) 55%, transparent);
+}
+.chat-header, .composer, .sheet-header, .admin-header {
+  box-shadow: inset 0 1px 0 color-mix(in srgb, #fff 22%, transparent);
 }
 .admin-header { position: sticky; top: 0; z-index: 5; padding: 10px 0; margin: -16px -16px 16px; padding-inline: 16px; }
 
+.action-sheet { animation: sheetUp .34s cubic-bezier(.32, .72, 0, 1); }
+
 .btn, .tool-btn, .icon-btn, .send-btn, .preset, .g-item, .reaction-pill, .voice-play {
-  transition: transform .12s ease, opacity .12s ease, background-color .15s, border-color .15s;
+  transition: transform .22s cubic-bezier(.34, 1.56, .64, 1), opacity .12s ease, background-color .15s, border-color .15s;
 }
 .btn:active, .tool-btn:active, .icon-btn:active, .send-btn:active, .reaction-pill:active, .voice-play:active {
   transform: scale(0.94);
+}
+
+/* Wallpapers and theme presets change instantly in JS, but the colours
+   themselves cross-fade rather than snapping, for a softer feel. */
+#app, .bubble, .chat-header, .composer, .messages, .reply-bar {
+  transition: background-color .35s ease, color .35s ease, border-color .35s ease;
 }
 
 /* ---- reply bar (composer) ---- */
@@ -1131,6 +1155,74 @@ body[data-view="chat"] .admin-dot { display: none; }
 
 /* ---- privacy auto-lock icon ---- */
 .privacy-shield svg { opacity: .6; }
+
+/* =====================================================================
+   v4 additions: avatars, my-profile, shared wallpaper
+   ===================================================================== */
+
+/* ---- avatars ---- */
+.avatar {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  flex: none;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  color: #fff;
+  font-size: 12.5px;
+  font-weight: 700;
+  background: var(--accent);
+  border: 0;
+  padding: 0;
+  cursor: default;
+}
+.avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.avatar-sm { width: 26px; height: 26px; font-size: 11px; }
+.avatar-lg { width: 76px; height: 76px; font-size: 24px; cursor: pointer; }
+.avatar-spacer { width: 26px; flex: none; }
+.msg-row { align-items: flex-end; gap: 6px; }
+
+/* ---- typing indicator ---- */
+.typing-bubble { display: flex; align-items: center; gap: 4px; padding: 12px 14px; min-width: 48px; }
+.typing-bubble .dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: .45;
+  animation: typingBounce 1.1s ease-in-out infinite;
+}
+.typing-bubble .dot:nth-child(2) { animation-delay: .15s; }
+.typing-bubble .dot:nth-child(3) { animation-delay: .3s; }
+@keyframes typingBounce {
+  0%, 60%, 100% { transform: translateY(0); opacity: .45; }
+  30% { transform: translateY(-4px); opacity: 1; }
+}
+
+.avatar-btn { padding: 0; width: 34px; height: 34px; }
+.avatar-btn .avatar { width: 100%; height: 100%; }
+
+/* ---- my profile ---- */
+.profile-dialog { text-align: left; }
+.profile-avatar-row { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; }
+.profile-avatar-actions { display: flex; flex-direction: column; gap: 8px; }
+
+/* ---- shared wallpaper ---- */
+.wallpaper-row { display: flex; align-items: center; gap: 12px; margin: 10px 0 6px; }
+.wallpaper-preview {
+  width: 64px; height: 64px;
+  flex: none;
+  border-radius: 14px;
+  overflow: hidden;
+  background: var(--surface-2);
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--border);
+}
+.wallpaper-preview img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.wallpaper-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.messages { background-size: cover; background-position: center; background-repeat: no-repeat; }
+.messages.has-wallpaper .day-chip span { background: rgba(18, 33, 42, 0.55); color: #fff; backdrop-filter: blur(4px); }
   </style>
 </head>
 <body data-view="home">
@@ -1174,6 +1266,9 @@ body[data-view="chat"] .admin-dot { display: none; }
           <div id="presence" class="presence" aria-live="polite"></div>
         </div>
         <div class="header-actions">
+          <button id="profile-btn" class="icon-btn avatar-btn" type="button" aria-label="My profile" title="My profile">
+            <span id="profile-avatar-btn" class="avatar avatar-sm"><span>?</span></span>
+          </button>
           <button id="gallery-btn" class="icon-btn" type="button" aria-label="Gallery" title="Gallery">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="9" cy="10" r="1.6"/><path d="M21 16l-5-5-8 8"/></svg>
           </button>
@@ -1285,6 +1380,15 @@ body[data-view="chat"] .admin-dot { display: none; }
             <label><span>Accent</span><input id="theme-accent" type="color" value="#0e7c86"></label>
           </div>
           <p class="muted small">Text colours adjust automatically so messages stay readable.</p>
+          <div class="wallpaper-row">
+            <div id="wallpaper-preview" class="wallpaper-preview"><span class="muted small">No picture</span></div>
+            <div class="wallpaper-actions">
+              <button id="wallpaper-choose" class="btn btn-ghost btn-sm" type="button">Choose photo</button>
+              <button id="wallpaper-remove" class="btn btn-ghost btn-sm hidden" type="button">Remove photo</button>
+              <input id="wallpaper-input" type="file" accept="image/*" hidden>
+            </div>
+          </div>
+          <p class="muted small">A custom wallpaper picture replaces the background colour above, for everyone in this chat.</p>
         </section>
 
         <section class="panel">
@@ -1437,6 +1541,30 @@ body[data-view="chat"] .admin-dot { display: none; }
         <button id="ms-reply" class="ms-item" type="button">Reply</button>
         <button id="ms-delete" class="ms-item danger hidden" type="button">Delete for everyone</button>
         <button id="ms-cancel" class="ms-item cancel" type="button">Cancel</button>
+      </div>
+    </div>
+
+    <!-- ================= MY PROFILE ================= -->
+    <div id="profile-sheet" class="dialog-backdrop hidden" role="dialog" aria-modal="true" aria-label="My profile">
+      <div class="dialog profile-dialog">
+        <h3>My profile</h3>
+        <div class="profile-avatar-row">
+          <button id="profile-avatar-preview" class="avatar avatar-lg" type="button" aria-label="Change profile picture">
+            <img id="profile-avatar-img" alt="" class="hidden">
+            <span id="profile-initials">?</span>
+          </button>
+          <div class="profile-avatar-actions">
+            <button id="profile-photo-btn" class="btn btn-ghost btn-sm" type="button">Choose photo</button>
+            <button id="profile-remove-photo" class="btn btn-ghost btn-sm hidden" type="button">Remove</button>
+            <input id="profile-photo-input" type="file" accept="image/*" hidden>
+          </div>
+        </div>
+        <label class="field"><span>Your name</span><input id="profile-name-input" type="text" maxlength="30"></label>
+        <p id="profile-error" class="form-error" role="alert"></p>
+        <div class="dialog-actions">
+          <button id="profile-close" class="btn btn-ghost" type="button">Cancel</button>
+          <button id="profile-save-btn" class="btn btn-primary" type="button">Save</button>
+        </div>
       </div>
     </div>
 
@@ -2099,21 +2227,229 @@ function applyTheme(theme) {
   app.style.colorScheme = vars._dark ? "dark" : "light";
 }
 
-function loadTheme(chatId) {
-  try {
-    const raw = storeGet(STORE.themePrefix + chatId);
-    const t = raw ? JSON.parse(raw) : null;
-    if (t && t.preset === "custom" && isHex(t.bg) && isHex(t.bubble) && isHex(t.accent)) return t;
-    if (t && THEME_PRESETS[t.preset]) return { preset: t.preset };
-  } catch (e) { /* fall through to default */ }
+// The wallpaper colours are shared by the whole chat (stored on the chats
+// row itself, see supabase-update-3.sql) - so everyone sees the same one,
+// not a separate per-device choice. Falls back to the admin's default
+// theme, then to Classic, until someone in the chat picks one.
+function effectiveTheme() {
+  const t = state.chat && state.chat.theme;
+  if (t && t.preset === "custom" && isHex(t.bg) && isHex(t.bubble) && isHex(t.accent)) return t;
+  if (t && THEME_PRESETS[t.preset]) return { preset: t.preset };
   const d = state.appSettings && state.appSettings.default_theme;
   if (d && d.preset === "custom" && isHex(d.bg) && isHex(d.bubble) && isHex(d.accent)) return d;
   if (d && THEME_PRESETS[d.preset]) return { preset: d.preset };
   return { preset: "classic" };
 }
 
-function saveTheme(chatId, theme) {
-  storeSet(STORE.themePrefix + chatId, JSON.stringify(theme));
+let themeSaveTimer = null;
+function saveChatTheme(theme) {
+  if (!state.chat) return;
+  const chatId = state.chat.id;
+  clearTimeout(themeSaveTimer);
+  themeSaveTimer = setTimeout(async () => {
+    try {
+      const { error } = await db.rpc("set_chat_theme", { p_chat: chatId, p_theme: theme });
+      if (error) throw error;
+    } catch (err) {
+      console.warn("Could not save the chat wallpaper colour:", err);
+      toast("Couldn't save that for the other person. Run supabase-update-3.sql to enable shared wallpapers.", "error", 5000);
+    }
+  }, 250); // small debounce so dragging a colour picker doesn't spam requests
+}
+
+/* ---------- shared custom wallpaper picture ---------- */
+
+async function applyWallpaper(path) {
+  if (!path) {
+    els.messages.style.backgroundImage = "";
+    els.messages.classList.remove("has-wallpaper");
+    return;
+  }
+  try {
+    const url = await getSignedUrl(path);
+    if (!state.chat || state.chat.wallpaperPath !== path) return; // superseded while we were fetching
+    els.messages.style.backgroundImage = `linear-gradient(rgba(10,16,20,.22),rgba(10,16,20,.22)), url("${url}")`;
+    els.messages.classList.add("has-wallpaper");
+  } catch (err) {
+    console.warn("Could not load the chat wallpaper:", err);
+  }
+}
+
+async function chooseWallpaper(file) {
+  if (!state.chat) return;
+  const chatId = state.chat.id;
+  els.wallpaperChoose.disabled = true;
+  try {
+    const img = await loadImageElement(file);
+    const scaled = await scaleImage(img, WALLPAPER_MAX, 0.82);
+    const path = `${chatId}/wallpaper-${Date.now()}.jpg`;
+    await uploadToBucket(path, scaled.blob, "image/jpeg");
+    const { error } = await db.rpc("set_chat_wallpaper", { p_chat: chatId, p_wallpaper_path: path });
+    if (error) throw error;
+    if (!state.chat || state.chat.id !== chatId) return;
+    state.chat.wallpaperPath = path;
+    applyWallpaper(path);
+    renderWallpaperUI();
+    toast("Wallpaper updated for everyone in this chat.");
+  } catch (err) {
+    console.error("Wallpaper upload failed:", err);
+    toast(photoErrorMessage(err), "error");
+  } finally {
+    els.wallpaperChoose.disabled = false;
+  }
+}
+
+async function removeWallpaper() {
+  if (!state.chat) return;
+  const chatId = state.chat.id;
+  try {
+    const { error } = await db.rpc("set_chat_wallpaper", { p_chat: chatId, p_wallpaper_path: null });
+    if (error) throw error;
+    if (!state.chat || state.chat.id !== chatId) return;
+    state.chat.wallpaperPath = null;
+    applyWallpaper(null);
+    renderWallpaperUI();
+  } catch (err) {
+    console.error("Remove wallpaper failed:", err);
+    toast("Couldn't remove the wallpaper.", "error");
+  }
+}
+
+function renderWallpaperUI() {
+  const path = state.chat && state.chat.wallpaperPath;
+  els.wallpaperRemove.classList.toggle("hidden", !path);
+  if (!path) {
+    els.wallpaperPreview.replaceChildren(el("span", "muted small", "No picture"));
+    return;
+  }
+  const img = document.createElement("img");
+  img.alt = "";
+  attachImage(img, path);
+  els.wallpaperPreview.replaceChildren(img);
+}
+
+/* ---------- avatars (this chat's people, each with their own picture) ---------- */
+
+const AVATAR_COLORS = ["#0e7c86", "#6f4fc8", "#d0336a", "#14804a", "#c2790f", "#1272c4", "#a83232", "#5c5c99"];
+function avatarColorFor(id) {
+  let h = 0;
+  for (const c of String(id || "")) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+  return AVATAR_COLORS[h % AVATAR_COLORS.length];
+}
+function initialsFor(name) {
+  const parts = String(name || "").trim().split(/\s+/).filter(Boolean);
+  const s = (parts[0] ? parts[0][0] : "") + (parts[1] ? parts[1][0] : "");
+  return (s || "?").toUpperCase();
+}
+function avatarPathFor(userId) {
+  if (!state.chat) return null;
+  if (state.user && userId === state.user.id) return state.chat.avatarPath || null;
+  const p = state.participants.find((x) => x.user_id === userId);
+  return p ? p.avatar_path || null : null;
+}
+function buildAvatarEl(userId, name, path, size) {
+  const wrap = el("div", "avatar" + (size ? " avatar-" + size : ""));
+  if (path) {
+    const img = document.createElement("img");
+    img.alt = "";
+    attachImage(img, path);
+    wrap.appendChild(img);
+  } else {
+    wrap.style.background = avatarColorFor(userId || name);
+    wrap.appendChild(el("span", "", initialsFor(name)));
+  }
+  return wrap;
+}
+
+function updateProfileButton() {
+  if (!state.chat || !state.user) return;
+  els.profileAvatarBtn.replaceChildren();
+  const inner = buildAvatarEl(state.user.id, state.chat.displayName, state.chat.avatarPath, "sm");
+  els.profileAvatarBtn.replaceWith(inner);
+  inner.id = "profile-avatar-btn";
+  els.profileAvatarBtn = inner;
+}
+
+/* ---------- my profile sheet (name + picture, per chat) ---------- */
+
+function openProfile() {
+  if (!state.chat) return;
+  els.profileNameInput.value = state.chat.displayName || "";
+  els.profileError.textContent = "";
+  state.profilePendingFile = null;
+  if (state.chat.avatarPath) {
+    els.profileAvatarImg.classList.remove("hidden");
+    els.profileInitials.classList.add("hidden");
+    attachImage(els.profileAvatarImg, state.chat.avatarPath);
+    els.profileRemovePhoto.classList.remove("hidden");
+  } else {
+    els.profileAvatarImg.classList.add("hidden");
+    els.profileInitials.classList.remove("hidden");
+    els.profileInitials.textContent = initialsFor(state.chat.displayName);
+    els.profileRemovePhoto.classList.add("hidden");
+  }
+  els.profileSheet.classList.remove("hidden");
+  setTimeout(() => els.profileNameInput.focus(), 30);
+}
+
+function closeProfile() {
+  els.profileSheet.classList.add("hidden");
+  state.profilePendingFile = null;
+}
+
+function onProfilePhotoChosen(file) {
+  state.profilePendingFile = file;
+  els.profileAvatarImg.src = URL.createObjectURL(file);
+  els.profileAvatarImg.classList.remove("hidden");
+  els.profileInitials.classList.add("hidden");
+  els.profileRemovePhoto.classList.remove("hidden");
+}
+
+function onProfileRemovePhoto() {
+  state.profilePendingFile = "REMOVE";
+  els.profileAvatarImg.classList.add("hidden");
+  els.profileInitials.classList.remove("hidden");
+  els.profileRemovePhoto.classList.add("hidden");
+}
+
+async function saveProfile() {
+  if (!state.chat || !state.user) return;
+  const name = els.profileNameInput.value.trim();
+  if (!name) {
+    els.profileError.textContent = "Please enter a name.";
+    return;
+  }
+  els.profileError.textContent = "";
+  els.profileSaveBtn.disabled = true;
+  const chatId = state.chat.id;
+  try {
+    let avatarArg; // undefined = leave unchanged, "" = remove, path = set
+    if (state.profilePendingFile === "REMOVE") {
+      avatarArg = "";
+    } else if (state.profilePendingFile) {
+      const img = await loadImageElement(state.profilePendingFile);
+      const scaled = await scaleImage(img, AVATAR_MAX, 0.85);
+      const path = `${chatId}/avatars/${state.user.id}-${Date.now()}.jpg`;
+      await uploadToBucket(path, scaled.blob, "image/jpeg");
+      avatarArg = path;
+    }
+    const { error } = await db.rpc("set_my_profile", { p_chat: chatId, p_display_name: name, p_avatar_path: avatarArg });
+    if (error) throw error;
+    if (!state.chat || state.chat.id !== chatId) return;
+    state.chat.displayName = name;
+    if (avatarArg !== undefined) state.chat.avatarPath = avatarArg || null;
+    storeSet(STORE.displayName, name);
+    updateProfileButton();
+    refreshParticipants(true);
+    renderMessages();
+    closeProfile();
+    toast("Profile updated.");
+  } catch (err) {
+    console.error("Save profile failed:", err);
+    els.profileError.textContent = friendlyError(err);
+  } finally {
+    els.profileSaveBtn.disabled = false;
+  }
 }
 
 
@@ -2132,6 +2468,8 @@ const IMG_FULL_MAX = 2048;            // longest side of the stored photo
 const IMG_THUMB_MAX = 480;            // longest side of the thumbnail
 const IMG_MAX_INPUT = 30 * 1024 * 1024;
 const GIF_MAX = 15 * 1024 * 1024;
+const AVATAR_MAX = 256;      // longest side of a saved profile picture
+const WALLPAPER_MAX = 1600;  // longest side of a saved custom wallpaper
 
 const photoImgs = new Map();   // message id -> <img>, reused on every re-render
 
@@ -2177,6 +2515,8 @@ const state = {
   recording: null,           // { recorder, chunks, startedAt, timerId, stream } while recording a voice note
 
   suppressAutoLock: 0,       // Date.now() timestamp until which a backgrounding is NOT treated as "left the app"
+
+  profilePendingFile: null,  // File chosen in the profile sheet, or "REMOVE", or null = unchanged
 };
 
 const els = {
@@ -2262,6 +2602,25 @@ const els = {
   createMax: $("#create-max"),
 
   privacyShield: $("#privacy-shield"),
+
+  profileBtn: $("#profile-btn"),
+  profileAvatarBtn: $("#profile-avatar-btn"),
+  profileSheet: $("#profile-sheet"),
+  profileClose: $("#profile-close"),
+  profileAvatarPreview: $("#profile-avatar-preview"),
+  profileAvatarImg: $("#profile-avatar-img"),
+  profileInitials: $("#profile-initials"),
+  profilePhotoBtn: $("#profile-photo-btn"),
+  profilePhotoInput: $("#profile-photo-input"),
+  profileRemovePhoto: $("#profile-remove-photo"),
+  profileNameInput: $("#profile-name-input"),
+  profileError: $("#profile-error"),
+  profileSaveBtn: $("#profile-save-btn"),
+
+  wallpaperPreview: $("#wallpaper-preview"),
+  wallpaperInput: $("#wallpaper-input"),
+  wallpaperChoose: $("#wallpaper-choose"),
+  wallpaperRemove: $("#wallpaper-remove"),
 
   lightbox: $("#lightbox"),
   lbClose: $("#lb-close"),
@@ -2722,6 +3081,9 @@ async function enterChat(info, fromAdmin) {
     code: info.r_code,
     displayName: info.r_display_name,
     maxMembers: info.r_max_members || 2,
+    avatarPath: info.r_avatar_path || null,
+    theme: info.r_theme || null,
+    wallpaperPath: info.r_wallpaper_path || null,
     msgKey: null, // filled in just below, once it has been derived
   };
   state.messages = [];
@@ -2738,11 +3100,15 @@ async function enterChat(info, fromAdmin) {
   state.firstPaintDone = false;
   state.infoCodeShown = false;
   state.gallery = { open: false, items: [], ids: new Set(), hasMore: false, loading: false, loaded: false };
+  state.othersTyping = new Map();
   clearReplyTarget();
   closeMsgActions();
 
-  state.theme = loadTheme(state.chat.id);
+  state.theme = effectiveTheme();
   applyTheme(state.theme);
+  applyWallpaper(state.chat.wallpaperPath);
+  renderWallpaperUI();
+  updateProfileButton();
   state.chat.msgKey = await deriveChatKey(state.chat.code);
 
   els.chatName.textContent = state.chat.name;
@@ -2768,6 +3134,7 @@ async function enterChat(info, fromAdmin) {
 
 async function leaveChat() {
   clearTimeout(saveTimer);
+  clearTypingState();
   stopHeartbeat();
   if (state.channel) {
     const ch = state.channel;
@@ -2947,6 +3314,7 @@ async function refreshParticipants(force) {
       last_seen_at: r.r_last_seen_at,
       left_at: r.r_left_at,
       is_me: r.r_is_me,
+      avatar_path: r.r_avatar_path || null,
     }));
     state.participantsError = false;
   } catch (err) {
@@ -2954,6 +3322,7 @@ async function refreshParticipants(force) {
     state.participantsError = true;
   }
   renderPresence();
+  renderMessages(); // picks up any new/changed avatars
 }
 
 /* ---------- realtime subscription ---------- */
@@ -2983,8 +3352,30 @@ function subscribeToChat() {
         if (state.chat && payload.old && payload.old.id === state.chat.id) handleChatDeleted();
       }
     )
+    .on(
+      "postgres_changes",
+      { event: "UPDATE", schema: "public", table: "chats" },
+      (payload) => {
+        if (state.channel !== channel || !state.chat || !payload.new || payload.new.id !== state.chat.id) return;
+        state.chat.theme = payload.new.theme || null;
+        state.chat.wallpaperPath = payload.new.wallpaper_path || null;
+        state.theme = effectiveTheme();
+        applyTheme(state.theme);
+        applyWallpaper(state.chat.wallpaperPath);
+        renderWallpaperUI();
+        syncThemeUI();
+      }
+    )
+    .on(
+      "postgres_changes",
+      { event: "UPDATE", schema: "public", table: "chat_members", filter: `chat_id=eq.${chatId}` },
+      () => { if (state.channel === channel) refreshParticipants(true); }
+    )
     .on("presence", { event: "sync" }, () => {
       if (state.channel === channel) syncPresence(channel);
+    })
+    .on("broadcast", { event: "typing" }, ({ payload }) => {
+      if (state.channel === channel) onTypingBroadcast(payload);
     })
     .subscribe((status) => {
       if (state.channel !== channel) return; // stale channel
@@ -3360,10 +3751,19 @@ function renderMessages(opts = {}) {
       bindLongPress(bubble, () => openMsgActions(m.id));
     }
 
-    row.appendChild(bubble);
+    // A picture (or a same-width blank spacer, for messages grouped under
+    // the one above) sits beside the bubble - on the left for the other
+    // person, on the right for mine.
+    const avatarNode = grouped
+      ? el("div", "avatar-spacer")
+      : buildAvatarEl(m.sender_id, senderName, avatarPathFor(m.sender_id), "sm");
+    if (mine) row.append(bubble, avatarNode);
+    else row.append(avatarNode, bubble);
     frag.appendChild(row);
     lastSender = m.sender_id;
   }
+
+  if (state.othersTyping && state.othersTyping.size) frag.appendChild(buildTypingRow());
 
   list.replaceChildren(frag);
 
@@ -3419,6 +3819,7 @@ async function sendCurrentMessage() {
   updateSendButton();
   els.msgInput.focus(); // keeps the phone keyboard open
   clearReplyTarget();
+  stopTypingNow();
   haptic("tap");
 
   state.messages.push(msg);
@@ -4099,9 +4500,10 @@ function buildThemeUI() {
 function setTheme(theme) {
   if (!state.chat) return;
   state.theme = theme;
-  saveTheme(state.chat.id, theme);
+  state.chat.theme = theme;
   applyTheme(theme);
   syncThemeUI();
+  saveChatTheme(theme);
 }
 
 function syncThemeUI() {
@@ -4340,7 +4742,94 @@ async function downloadCurrentPhoto() {
 }
 
 
-/* ---------- reply, react, delete (long-press action sheet) ---------- */
+/* ---------- typing indicator ("...typing" dots, like WhatsApp) ---------- */
+
+let typingSendTimer = null;
+let typingIsActive = false;
+
+// Called on every keystroke in the composer. Tells the other side "I'm
+// typing", and automatically tells them "I stopped" a couple of seconds
+// after the last keystroke (or immediately on send/clear).
+function notifyTyping() {
+  if (!state.chat || !state.channel) return;
+  const hasText = els.msgInput.value.trim().length > 0;
+  if (!hasText) {
+    stopTypingNow();
+    return;
+  }
+  if (!typingIsActive) {
+    typingIsActive = true;
+    sendTypingEvent(true);
+  }
+  clearTimeout(typingSendTimer);
+  typingSendTimer = setTimeout(stopTypingNow, 2500);
+}
+
+function stopTypingNow() {
+  clearTimeout(typingSendTimer);
+  if (typingIsActive) {
+    typingIsActive = false;
+    sendTypingEvent(false);
+  }
+}
+
+function sendTypingEvent(isTyping) {
+  if (!state.channel || !state.chat || !state.user) return;
+  try {
+    state.channel.send({
+      type: "broadcast",
+      event: "typing",
+      payload: { user_id: state.user.id, name: state.chat.displayName, typing: isTyping },
+    });
+  } catch (e) { /* realtime not connected yet - harmless, nothing to show either way */ }
+}
+
+// state.othersTyping: user_id -> display name, for everyone currently typing.
+let othersTypingTimers = new Map();
+function onTypingBroadcast(payload) {
+  if (!state.chat || !payload || !state.user || payload.user_id === state.user.id) return;
+  if (!state.othersTyping) state.othersTyping = new Map();
+  clearTimeout(othersTypingTimers.get(payload.user_id));
+  othersTypingTimers.delete(payload.user_id);
+
+  if (payload.typing) {
+    state.othersTyping.set(payload.user_id, payload.name || "");
+    // Safety timeout in case a "stopped typing" broadcast is ever missed
+    // (connection drop, tab closed mid-keystroke, etc.).
+    othersTypingTimers.set(
+      payload.user_id,
+      setTimeout(() => { state.othersTyping.delete(payload.user_id); renderMessages(); }, 5000)
+    );
+  } else {
+    state.othersTyping.delete(payload.user_id);
+  }
+  renderMessages();
+}
+
+function clearTypingState() {
+  stopTypingNow();
+  for (const t of othersTypingTimers.values()) clearTimeout(t);
+  othersTypingTimers = new Map();
+  state.othersTyping = new Map();
+}
+
+function buildTypingRow() {
+  const names = [...state.othersTyping.values()].filter(Boolean);
+  const firstId = [...state.othersTyping.keys()][0];
+  const row = el("div", "msg-row theirs typing-row");
+  row.append(
+    buildAvatarEl(firstId, names[0] || "", avatarPathFor(firstId), "sm"),
+    (() => {
+      const bubble = el("div", "bubble typing-bubble");
+      bubble.setAttribute("aria-label", (names[0] || "Someone") + " is typing");
+      bubble.append(el("span", "dot"), el("span", "dot"), el("span", "dot"));
+      return bubble;
+    })()
+  );
+  return row;
+}
+
+
 
 const REACTION_EMOJIS = ["\u2764\ufe0f", "\ud83d\ude02", "\ud83d\ude2e", "\ud83d\ude22", "\ud83d\udc4d", "\ud83d\ude4f"];
 
@@ -4814,6 +5303,7 @@ function bindEvents() {
   els.msgInput.addEventListener("input", () => {
     autoGrow();
     updateSendButton();
+    notifyTyping();
   });
   els.msgInput.addEventListener("keydown", (e) => {
     // Computer keyboard: Enter sends, Shift+Enter makes a new line.
@@ -4846,6 +5336,29 @@ function bindEvents() {
 
   // Chat info
   els.infoClose.addEventListener("click", closeInfo);
+
+  // My profile
+  els.profileBtn.addEventListener("click", openProfile);
+  els.profileClose.addEventListener("click", closeProfile);
+  els.profileSheet.addEventListener("click", (e) => { if (e.target === els.profileSheet) closeProfile(); });
+  els.profileAvatarPreview.addEventListener("click", () => { noteSystemUI(); els.profilePhotoInput.click(); });
+  els.profilePhotoBtn.addEventListener("click", () => { noteSystemUI(); els.profilePhotoInput.click(); });
+  els.profilePhotoInput.addEventListener("change", () => {
+    const file = els.profilePhotoInput.files && els.profilePhotoInput.files[0];
+    els.profilePhotoInput.value = "";
+    if (file) onProfilePhotoChosen(file);
+  });
+  els.profileRemovePhoto.addEventListener("click", onProfileRemovePhoto);
+  els.profileSaveBtn.addEventListener("click", saveProfile);
+
+  // Shared chat wallpaper picture
+  els.wallpaperChoose.addEventListener("click", () => { noteSystemUI(); els.wallpaperInput.click(); });
+  els.wallpaperInput.addEventListener("change", () => {
+    const file = els.wallpaperInput.files && els.wallpaperInput.files[0];
+    els.wallpaperInput.value = "";
+    if (file) chooseWallpaper(file);
+  });
+  els.wallpaperRemove.addEventListener("click", removeWallpaper);
   els.infoCodeToggle.addEventListener("click", () => {
     state.infoCodeShown = !state.infoCodeShown;
     renderInfo();
